@@ -23,6 +23,12 @@ This is the **foundation build** - a solid base with PWA capabilities, design sy
 
 ### ✨ Current Features
 
+- **🔐 User Authentication**: Secure email/password authentication with Supabase
+- **🛡️ Row-Level Security**: Data isolation - users only see their own ideas
+- **📱 Mobile-Optimized Auth**: Large touch targets, glass morphism design
+- **🔒 Protected Routes**: Middleware guards all authenticated pages
+- **👤 User Profile**: Email display and logout in settings
+- **💾 PWA Auth Persistence**: Auth state persists in installed PWA
 - **PWA Ready**: Installable on mobile devices like a native app
 - **Dark Theme**: Beautiful gradient background with glass morphism effects
 - **Design System**: Complete UI component library (Button, Card, Badge)
@@ -98,9 +104,47 @@ This will create:
 - `ideas` table - stores all captured ideas
 - `user_settings` table - stores user preferences
 - Indexes for performance
-- RLS policies (currently open - update for production)
 
-### 5. Run Development Server
+### 5. Configure Authentication
+
+**CRITICAL: Authentication is now required for all users**
+
+#### Step 1: Enable Supabase Auth
+
+1. Go to your Supabase project dashboard
+2. Navigate to **Authentication** → **Settings**
+3. Under **Auth Providers**, ensure **Email** is enabled
+4. Configure **Site URL** and **Redirect URLs**:
+   - Add your development URL: `http://localhost:3000`
+   - Add your production domain (e.g., `https://yourdomain.vercel.app`)
+   - For deployed apps, add the Vercel domain to redirect URLs
+
+#### Step 2: Run Database Migrations
+
+**Important: Run these SQL scripts in order**
+
+1. First, run the user_id migration:
+   - Open Supabase SQL Editor
+   - Copy contents from `supabase/add_user_id_migration.sql`
+   - Execute the script
+   - This adds `user_id` columns and foreign key constraints
+
+2. Then, enable Row-Level Security:
+   - Open Supabase SQL Editor
+   - Copy contents from `supabase/rls_policies.sql`
+   - Execute the script
+   - This enables RLS and creates security policies
+
+#### Step 3: Verify RLS Policies
+
+After running the scripts, verify that:
+- ✅ RLS is enabled on `ideas` and `user_settings` tables
+- ✅ 4 policies exist on `ideas` table (SELECT, INSERT, UPDATE, DELETE)
+- ✅ 3 policies exist on `user_settings` table (SELECT, INSERT, UPDATE)
+
+You can check this in Supabase Dashboard → **Database** → **Tables** → Click table → **RLS Policies** tab
+
+### 6. Run Development Server
 
 ```bash
 npm run dev
@@ -108,7 +152,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 6. Build for Production
+### 7. Build for Production
 
 ```bash
 npm run build
@@ -151,27 +195,33 @@ npm start
 ideacapture/
 ├── app/                      # Next.js App Router pages
 │   ├── page.tsx             # Home page (voice capture placeholder)
+│   ├── login/               # Login page (mobile-optimized)
+│   ├── signup/              # Signup page (mobile-optimized)
 │   ├── mindmap/             # Mind map page (placeholder)
 │   ├── ideas/               # Ideas list page (placeholder)
-│   ├── settings/            # Settings page (placeholder)
-│   ├── layout.tsx           # Root layout with BottomNav
+│   ├── settings/            # Settings page with logout
+│   ├── layout.tsx           # Root layout with auth wrapper
 │   └── globals.css          # Global styles & design system
 ├── components/
 │   ├── ui/                  # Design system components
 │   │   ├── Button.tsx       # Gradient button with animations
 │   │   ├── Card.tsx         # Glass morphism card
 │   │   └── Badge.tsx        # Colored badge variants
-│   └── BottomNav.tsx        # Bottom navigation bar
+│   ├── BottomNav.tsx        # Bottom navigation bar
+│   └── LayoutWrapper.tsx    # Auth state handler + conditional nav
 ├── lib/
 │   ├── types.ts             # TypeScript type definitions
-│   ├── supabase.ts          # Supabase client
+│   ├── supabase.ts          # Supabase client + auth helpers
 │   ├── database.types.ts    # Database types
 │   └── utils.ts             # Utility functions (cn)
 ├── supabase/
-│   └── schema.sql           # Database schema
+│   ├── schema.sql           # Database schema
+│   ├── add_user_id_migration.sql  # Add user_id columns
+│   └── rls_policies.sql     # Row-Level Security policies
 ├── public/
 │   ├── manifest.json        # PWA manifest
 │   └── icons/               # App icons (192x192, 512x512)
+├── middleware.ts            # Auth middleware (route protection)
 ├── next.config.ts           # Next.js + PWA config
 └── .env.local               # Environment variables (not in git)
 ```
@@ -237,6 +287,8 @@ npm run lint      # Run ESLint
 Stores all captured ideas with refinement and validation data.
 
 **Key Fields:**
+- `id` - UUID primary key
+- `user_id` - UUID foreign key to auth.users (REQUIRED)
 - `title` - Idea title
 - `description` - Detailed description
 - `idea_type` - Category (tech, business, product, content, other)
@@ -246,13 +298,22 @@ Stores all captured ideas with refinement and validation data.
 - `validation_result` - AI validation analysis
 - `status` - Current status (captured, refining, validated, pursuing, archived)
 
+**RLS Policies:**
+- Users can only SELECT, INSERT, UPDATE, DELETE their own ideas
+- Enforced via `user_id = auth.uid()` in all policies
+
 ### User Settings Table
 
 Stores user preferences and settings.
 
 **Key Fields:**
+- `id` - UUID primary key (references auth.users)
 - `validation_enabled` - Auto-validate new ideas
 - `default_view` - Preferred view mode (list, grid, mindmap)
+
+**RLS Policies:**
+- Users can only SELECT, INSERT, UPDATE their own settings
+- Enforced via `id = auth.uid()` in all policies
 
 ---
 
@@ -260,11 +321,20 @@ Stores user preferences and settings.
 
 ### Security
 
-⚠️ **Row Level Security (RLS)** is currently set to allow all operations. Before deploying to production:
+✅ **Row Level Security (RLS)** is fully implemented and enforced:
 
-1. Implement proper authentication (Supabase Auth)
-2. Update RLS policies to be user-specific
-3. Add proper access controls
+- All routes are protected by authentication middleware
+- Users can only access their own data (enforced by RLS policies)
+- Auth state persists in PWA for offline access
+- Middleware redirects unauthenticated users to login
+
+**Before deploying to production:**
+
+1. ✅ Update `.env.local` with real Supabase credentials
+2. ✅ Run both migration scripts in Supabase SQL Editor
+3. ✅ Configure redirect URLs in Supabase Auth settings
+4. ✅ Test authentication flow on mobile
+5. ⚠️ Never commit `.env.local` to version control
 
 ### PWA Service Worker
 
@@ -276,12 +346,33 @@ The Inter font is loaded via CSS import. If you experience issues in restricted 
 
 ---
 
-## 📝 Next Steps
+## 📝 First-Time Setup Checklist
 
-1. **Run the schema**: Execute `supabase/schema.sql` in your Supabase SQL Editor
-2. **Test on mobile**: Install the PWA on your phone
-3. **Verify navigation**: Check all bottom nav tabs work
-4. **Check build**: Ensure `npm run build` passes with no errors
+### Database Setup
+- [ ] Run `supabase/schema.sql` in Supabase SQL Editor
+- [ ] Run `supabase/add_user_id_migration.sql` to add user_id columns
+- [ ] Run `supabase/rls_policies.sql` to enable RLS
+- [ ] Verify RLS policies in Supabase Dashboard
+
+### Auth Configuration
+- [ ] Enable Email provider in Supabase Auth settings
+- [ ] Add localhost redirect URL: `http://localhost:3000`
+- [ ] Add production redirect URL (when deploying)
+- [ ] Update `.env.local` with real Supabase credentials
+
+### Testing
+- [ ] Sign up with a test email
+- [ ] Verify redirect to home page after login
+- [ ] Check user email displays in Settings
+- [ ] Test logout functionality
+- [ ] Sign up second user in incognito - verify data isolation
+- [ ] Install PWA on mobile and test auth persistence
+
+### Build Verification
+- [ ] Run `npm run build` - must pass with 0 errors
+- [ ] Test on iPhone Safari (if available)
+- [ ] Test on Android Chrome (if available)
+- [ ] Verify no console errors
 
 ---
 
@@ -305,15 +396,29 @@ MIT License - see LICENSE file
 
 ---
 
-## 🎉 Foundation Complete!
+## 🎉 Authentication Complete!
 
 This build establishes:
 - ✅ Solid Next.js + TypeScript base
 - ✅ PWA configuration and manifest
 - ✅ Complete design system
-- ✅ Database schema ready
+- ✅ Database schema with RLS
+- ✅ **Secure user authentication**
+- ✅ **Row-Level Security policies**
+- ✅ **Protected routes with middleware**
+- ✅ **Mobile-optimized login/signup**
 - ✅ Mobile-first responsive layout
 - ✅ Bottom navigation
 - ✅ All placeholder pages
 
-**Ready for feature development in next sessions!** 🚀
+**🔐 Now fully secure and ready for feature development!** 🚀
+
+### What's Next?
+
+Future sessions will add:
+1. Voice recording and transcription
+2. AI-powered idea refinement
+3. Automated validation engine
+4. Interactive mind map
+5. Ideas library with filtering
+6. User preferences and settings
