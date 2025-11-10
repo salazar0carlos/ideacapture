@@ -1,0 +1,43 @@
+import type { Metadata, Viewport } from "next";
+import "./globals.css";
+import { BottomNav } from "@/components/BottomNav";
+
+export const metadata: Metadata = {
+  title: "IdeaCapture",
+  description: "Never lose an idea again",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "IdeaCapture",
+  },
+  icons: {
+    icon: "/icons/icon-192x192.png",
+    apple: "/icons/icon-192x192.png",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#6366F1",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="en">
+      <body className="antialiased">
+        <main className="min-h-screen pb-[80px]">
+          {children}
+        </main>
+        <BottomNav />
+      </body>
+    </html>
+  );
+}
