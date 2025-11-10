@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { BottomNav } from "@/components/BottomNav";
+import { LayoutWrapper } from "@/components/LayoutWrapper";
 
 export const metadata: Metadata = {
   title: "IdeaCapture",
@@ -10,6 +10,7 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "IdeaCapture",
+    startupImage: "/icons/icon-192x192.png",
   },
   icons: {
     icon: "/icons/icon-192x192.png",
@@ -33,10 +34,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <main className="min-h-screen pb-[80px]">
-          {children}
-        </main>
-        <BottomNav />
+        <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
   );
