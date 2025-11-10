@@ -23,12 +23,13 @@ This is the **foundation build** - a solid base with PWA capabilities, design sy
 
 ### ✨ Current Features
 
-- **🔐 User Authentication**: Secure email/password authentication with Supabase
+- **🔐 Google OAuth Authentication**: One-click sign-in with Google
 - **🛡️ Row-Level Security**: Data isolation - users only see their own ideas
-- **📱 Mobile-Optimized Auth**: Large touch targets, glass morphism design
+- **📱 Mobile-Optimized Auth**: Large touch targets (56px+), beautiful design
 - **🔒 Protected Routes**: Middleware guards all authenticated pages
-- **👤 User Profile**: Email display and logout in settings
+- **👤 User Profile**: Google email display and logout in settings
 - **💾 PWA Auth Persistence**: Auth state persists in installed PWA
+- **✅ E2E Testing**: Playwright tests for auth flow and routes
 - **PWA Ready**: Installable on mobile devices like a native app
 - **Dark Theme**: Beautiful gradient background with glass morphism effects
 - **Design System**: Complete UI component library (Button, Card, Badge)
@@ -105,21 +106,37 @@ This will create:
 - `user_settings` table - stores user preferences
 - Indexes for performance
 
-### 5. Configure Authentication
+### 5. Configure Google OAuth Authentication
 
-**CRITICAL: Authentication is now required for all users**
+**CRITICAL: Google OAuth is required for all users**
 
-#### Step 1: Enable Supabase Auth
+#### Step 1: Create Google OAuth Application
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Create a new project (or select existing)
+3. Navigate to **APIs & Services** → **Credentials**
+4. Click **Create Credentials** → **OAuth 2.0 Client ID**
+5. Configure OAuth consent screen:
+   - User Type: External
+   - App name: IdeaCapture
+   - Add your email as developer contact
+6. Create OAuth 2.0 Client ID:
+   - Application type: Web application
+   - Authorized redirect URIs: `https://your-project.supabase.co/auth/v1/callback`
+7. Copy **Client ID** and **Client Secret**
+
+#### Step 2: Enable Google OAuth in Supabase
 
 1. Go to your Supabase project dashboard
-2. Navigate to **Authentication** → **Settings**
-3. Under **Auth Providers**, ensure **Email** is enabled
-4. Configure **Site URL** and **Redirect URLs**:
-   - Add your development URL: `http://localhost:3000`
-   - Add your production domain (e.g., `https://yourdomain.vercel.app`)
-   - For deployed apps, add the Vercel domain to redirect URLs
+2. Navigate to **Authentication** → **Providers**
+3. Enable **Google** provider
+4. Paste your Google **Client ID** and **Client Secret**
+5. Configure **Site URL**: `http://localhost:3000` (or your production URL)
+6. Add **Redirect URLs**:
+   - Development: `http://localhost:3000`
+   - Production: `https://yourdomain.vercel.app`
 
-#### Step 2: Run Database Migrations
+#### Step 3: Run Database Migrations
 
 **Important: Run these SQL scripts in order**
 
@@ -218,11 +235,15 @@ ideacapture/
 │   ├── schema.sql           # Database schema
 │   ├── add_user_id_migration.sql  # Add user_id columns
 │   └── rls_policies.sql     # Row-Level Security policies
+├── e2e/
+│   └── auth-flow.spec.ts    # Playwright E2E tests
 ├── public/
 │   ├── manifest.json        # PWA manifest
 │   └── icons/               # App icons (192x192, 512x512)
 ├── middleware.ts            # Auth middleware (route protection)
+├── playwright.config.ts     # Playwright test configuration
 ├── next.config.ts           # Next.js + PWA config
+├── TESTING.md               # Comprehensive testing guide
 └── .env.local               # Environment variables (not in git)
 ```
 
@@ -264,11 +285,41 @@ ideacapture/
 ### Available Scripts
 
 ```bash
-npm run dev       # Start development server
-npm run build     # Build for production
-npm start         # Start production server
-npm run lint      # Run ESLint
+npm run dev              # Start development server
+npm run build            # Build for production
+npm start                # Start production server
+npm run lint             # Run ESLint
+npm run test:e2e         # Run E2E tests (requires real Supabase)
+npm run test:e2e:ui      # Run E2E tests with UI
+npm run test:e2e:headed  # Run E2E tests with browser visible
 ```
+
+### Testing
+
+IdeaCapture includes comprehensive end-to-end testing with Playwright.
+
+**Run Tests:**
+
+```bash
+# Automated E2E tests (requires real Supabase + Google OAuth)
+npm run test:e2e
+
+# Run with interactive UI
+npm run test:e2e:ui
+```
+
+**Test Coverage:**
+- ✅ Authentication flow (login, redirect, OAuth button)
+- ✅ Protected routes (middleware guards)
+- ✅ Mobile responsiveness
+- ✅ UI/UX (branding, accessibility, touch targets)
+- ✅ Multi-browser (Chrome, Mobile Chrome, Mobile Safari)
+
+**Important:** E2E tests require a real Supabase project with Google OAuth configured. See [TESTING.md](./TESTING.md) for:
+- Complete manual testing checklist
+- Pre-deployment verification steps
+- RLS multi-user testing
+- Mobile PWA testing guide
 
 ### Environment Variables
 
@@ -355,24 +406,31 @@ The Inter font is loaded via CSS import. If you experience issues in restricted 
 - [ ] Verify RLS policies in Supabase Dashboard
 
 ### Auth Configuration
-- [ ] Enable Email provider in Supabase Auth settings
+- [ ] Create Google OAuth app in Google Cloud Console
+- [ ] Get Client ID and Client Secret
+- [ ] Enable Google provider in Supabase Auth settings
+- [ ] Add OAuth credentials to Supabase
 - [ ] Add localhost redirect URL: `http://localhost:3000`
 - [ ] Add production redirect URL (when deploying)
 - [ ] Update `.env.local` with real Supabase credentials
 
 ### Testing
-- [ ] Sign up with a test email
+- [ ] Click "Continue with Google" on login page
+- [ ] Sign in with your Google account
 - [ ] Verify redirect to home page after login
-- [ ] Check user email displays in Settings
+- [ ] Check Google email displays in Settings
 - [ ] Test logout functionality
-- [ ] Sign up second user in incognito - verify data isolation
+- [ ] Sign in with second Google account in incognito - verify data isolation
 - [ ] Install PWA on mobile and test auth persistence
 
 ### Build Verification
 - [ ] Run `npm run build` - must pass with 0 errors
+- [ ] Run `npm run test:e2e` - tests pass (with real Supabase)
 - [ ] Test on iPhone Safari (if available)
 - [ ] Test on Android Chrome (if available)
 - [ ] Verify no console errors
+
+For detailed testing procedures, see [TESTING.md](./TESTING.md)
 
 ---
 
@@ -396,22 +454,24 @@ MIT License - see LICENSE file
 
 ---
 
-## 🎉 Authentication Complete!
+## 🎉 Google OAuth & Testing Complete!
 
 This build establishes:
 - ✅ Solid Next.js + TypeScript base
 - ✅ PWA configuration and manifest
 - ✅ Complete design system
 - ✅ Database schema with RLS
-- ✅ **Secure user authentication**
+- ✅ **Google OAuth authentication (one-click sign-in)**
 - ✅ **Row-Level Security policies**
 - ✅ **Protected routes with middleware**
-- ✅ **Mobile-optimized login/signup**
+- ✅ **Mobile-optimized auth UI**
+- ✅ **Playwright E2E test suite**
+- ✅ **Comprehensive testing documentation**
 - ✅ Mobile-first responsive layout
 - ✅ Bottom navigation
 - ✅ All placeholder pages
 
-**🔐 Now fully secure and ready for feature development!** 🚀
+**🔐 Fully secure, tested, and ready for deployment!** 🚀
 
 ### What's Next?
 
