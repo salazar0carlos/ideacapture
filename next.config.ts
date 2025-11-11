@@ -1,5 +1,4 @@
 import type { NextConfig } from "next";
-import withPWA from "next-pwa";
 
 const nextConfig: NextConfig = {
   experimental: {
@@ -7,21 +6,6 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPWA({
-  dest: "public",
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === "development",
-  runtimeCaching: [
-    {
-      urlPattern: /^https?.*/,
-      handler: "NetworkFirst",
-      options: {
-        cacheName: "offlineCache",
-        expiration: {
-          maxEntries: 200,
-        },
-      },
-    },
-  ],
-})(nextConfig);
+// NOTE: PWA temporarily disabled due to next-pwa@5.6.0 incompatibility with Next.js 16
+// Will re-enable once upgraded to @ducanh2912/next-pwa (Next.js 16 compatible)
+export default nextConfig;
