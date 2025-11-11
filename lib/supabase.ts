@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { createClientComponentClient, createServerComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createBrowserClient } from '@supabase/ssr';
 import type { Database } from './database.types';
 
 // Environment validation
@@ -20,21 +20,18 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-// Client Component Supabase client (for use in Client Components)
-export function createSupabaseClient() {
-  return createClientComponentClient<Database>();
-}
-
-// Server Component Supabase client (for use in Server Components)
-// Note: This requires cookies() from 'next/headers' to be passed in
-export function createSupabaseServerClient(cookieStore: any) {
-  return createServerComponentClient<Database>({ cookies: () => cookieStore });
+// Browser Supabase client (for use in Client Components)
+export function createSupabaseBrowserClient() {
+  return createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 }
 
 // Helper to get current authenticated user
 export async function getUser() {
-  const supabase = createClientComponentClient<Database>();
-  const { data: { user }, error } = await supabase.auth.getUser();
+  const client = createSupabaseBrowserClient();
+  const { data: { user }, error } = await client.auth.getUser();
 
   if (error) {
     console.error('Error fetching user:', error);

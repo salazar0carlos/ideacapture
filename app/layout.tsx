@@ -40,14 +40,10 @@ export default function RootLayout({
       <body className="antialiased">
         <AuthProvider>
           <ToastProvider>
-            <main className="min-h-screen pb-[80px]">
-              {children}
-            </main>
-            <BottomNav />
+            <LayoutWrapper>{children}</LayoutWrapper>
             <ToastContainer />
           </ToastProvider>
         </AuthProvider>
-        <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
   );
