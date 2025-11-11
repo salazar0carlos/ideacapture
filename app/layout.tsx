@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { BottomNav } from "@/components/BottomNav";
+import { AuthProvider } from "@/lib/auth-context";
+import { ToastProvider } from "@/lib/toast-context";
+import { ToastContainer } from "@/components/Toast";
 
 export const metadata: Metadata = {
   title: "IdeaCapture",
@@ -33,10 +36,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <main className="min-h-screen pb-[80px]">
-          {children}
-        </main>
-        <BottomNav />
+        <AuthProvider>
+          <ToastProvider>
+            <main className="min-h-screen pb-[80px]">
+              {children}
+            </main>
+            <BottomNav />
+            <ToastContainer />
+          </ToastProvider>
+        </AuthProvider>
       </body>
     </html>
   );

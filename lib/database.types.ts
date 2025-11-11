@@ -12,6 +12,7 @@ export interface Database {
       ideas: {
         Row: {
           id: string
+          user_id: string
           title: string
           description: string | null
           idea_type: string
@@ -31,6 +32,7 @@ export interface Database {
         }
         Insert: {
           id?: string
+          user_id: string
           title: string
           description?: string | null
           idea_type: string
@@ -50,6 +52,7 @@ export interface Database {
         }
         Update: {
           id?: string
+          user_id?: string
           title?: string
           description?: string | null
           idea_type?: string
@@ -71,18 +74,21 @@ export interface Database {
       user_settings: {
         Row: {
           id: string
+          user_id: string
           validation_enabled: boolean
           default_view: string
           created_at: string
         }
         Insert: {
           id?: string
+          user_id: string
           validation_enabled?: boolean
           default_view?: string
           created_at?: string
         }
         Update: {
           id?: string
+          user_id?: string
           validation_enabled?: boolean
           default_view?: string
           created_at?: string

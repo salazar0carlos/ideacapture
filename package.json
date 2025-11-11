@@ -1,15 +1,49 @@
 {
   "name": "ideacapture",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
+  "description": "A mobile-first Progressive Web App for capturing, refining, and validating your ideas with AI-powered insights",
+  "author": {
+    "name": "Carlos Salazar",
+    "email": "carlos@example.com",
+    "url": "https://github.com/salazar0carlos"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/salazar0carlos/ideacapture.git"
+  },
+  "bugs": {
+    "url": "https://github.com/salazar0carlos/ideacapture/issues"
+  },
+  "homepage": "https://github.com/salazar0carlos/ideacapture#readme",
+  "keywords": [
+    "idea-management",
+    "voice-recording",
+    "ai",
+    "claude",
+    "pwa",
+    "nextjs",
+    "supabase",
+    "innovation",
+    "brainstorming",
+    "validation",
+    "entrepreneurship",
+    "productivity",
+    "mind-map",
+    "typescript",
+    "react"
+  ],
+  "private": false,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
+    "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.80.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -19,6 +53,7 @@
     "next-pwa": "^5.6.0",
     "react": "19.2.0",
     "react-dom": "19.2.0",
+    "reactflow": "^11.11.4",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
