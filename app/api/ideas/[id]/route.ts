@@ -7,6 +7,7 @@ import {
   addCorsHeaders,
   isValidUUID,
 } from '@/lib/api-helpers';
+import { decrementIdeasCount } from '@/lib/subscription-helpers';
 
 // GET /api/ideas/[id] - Fetch single idea by ID
 export async function GET(
@@ -208,6 +209,9 @@ export async function DELETE(
         { status: 500, headers: addCorsHeaders(new Headers()) }
       );
     }
+
+    // Decrement ideas count for the user
+    await decrementIdeasCount(supabase, user.id);
 
     return NextResponse.json(
       formatApiResponse({ message: 'Idea deleted successfully' }, null),

@@ -77,21 +77,42 @@ export interface Database {
           user_id: string
           validation_enabled: boolean
           default_view: string
+          subscription_tier: string
+          subscription_status: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_end_date: string | null
+          ideas_count: number
           created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
           user_id: string
           validation_enabled?: boolean
           default_view?: string
+          subscription_tier?: string
+          subscription_status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_end_date?: string | null
+          ideas_count?: number
           created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
           user_id?: string
           validation_enabled?: boolean
           default_view?: string
+          subscription_tier?: string
+          subscription_status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_end_date?: string | null
+          ideas_count?: number
           created_at?: string
+          updated_at?: string
         }
       }
     }

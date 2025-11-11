@@ -9,6 +9,7 @@ import {
 } from '@/lib/api-helpers';
 import { ValidationResult } from '@/lib/types';
 import { Database } from '@/lib/database.types';
+import { checkSubscriptionLimits } from '@/lib/subscription-helpers';
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
@@ -43,6 +44,15 @@ export async function POST(
 
     // Create Supabase client with user context
     const supabase = createServerSupabaseClient(request);
+
+    // Check if user has access to validation feature
+    const limits = await checkSubscriptionLimits(supabase, user.id);
+    if (!limits.can_use_validation) {
+      return NextResponse.json(
+        formatApiResponse(null, 'Validation is only available for Pro users. Upgrade to access AI-powered idea validation.'),
+        { status: 403, headers: addCorsHeaders(new Headers()) }
+      );
+    }
 
     // Fetch idea from database
     const { data: idea, error: fetchError } = await supabase

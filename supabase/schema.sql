@@ -38,7 +38,17 @@ CREATE TABLE IF NOT EXISTS user_settings (
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     validation_enabled BOOLEAN DEFAULT FALSE,
     default_view TEXT DEFAULT 'list' CHECK (default_view IN ('list', 'grid', 'mindmap')),
+
+    -- Subscription fields
+    subscription_tier TEXT DEFAULT 'free' CHECK (subscription_tier IN ('free', 'pro')),
+    subscription_status TEXT DEFAULT 'active' CHECK (subscription_status IN ('active', 'canceled', 'past_due', 'incomplete', 'incomplete_expired', 'trialing', 'unpaid')),
+    stripe_customer_id TEXT,
+    stripe_subscription_id TEXT,
+    subscription_end_date TIMESTAMPTZ,
+    ideas_count INTEGER DEFAULT 0,
+
     created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT user_settings_user_id_key UNIQUE (user_id)
 );
 
@@ -62,6 +72,12 @@ $$ LANGUAGE plpgsql;
 -- Trigger to update updated_at on ideas table
 CREATE TRIGGER update_ideas_updated_at
     BEFORE UPDATE ON ideas
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Trigger to update updated_at on user_settings table
+CREATE TRIGGER update_user_settings_updated_at
+    BEFORE UPDATE ON user_settings
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 

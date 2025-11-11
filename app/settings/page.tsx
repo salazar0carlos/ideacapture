@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Toggle } from "@/components/ui/Toggle";
@@ -17,18 +18,28 @@ import {
   Trash2,
   AlertTriangle,
   Save,
+  Crown,
+  CreditCard,
+  Sparkles,
 } from "lucide-react";
 
 interface UserSettings {
   id: string;
   validation_enabled: boolean;
   default_view: "list" | "grid" | "mindmap";
+  subscription_tier: "free" | "pro";
+  subscription_status: string;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
+  subscription_end_date: string | null;
+  ideas_count: number;
   created_at: string;
 }
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth();
   const toast = useToast();
+  const router = useRouter();
 
   // Settings state
   const [settings, setSettings] = useState<UserSettings | null>(null);
@@ -42,6 +53,9 @@ export default function SettingsPage() {
   const [showDeleteAccountConfirm, setShowDeleteAccountConfirm] = useState(false);
   const [showDeleteAccountFinalConfirm, setShowDeleteAccountFinalConfirm] = useState(false);
   const [deleteAccountInput, setDeleteAccountInput] = useState("");
+
+  // Subscription management
+  const [loadingPortal, setLoadingPortal] = useState(false);
 
   // Fetch settings on mount
   useEffect(() => {
@@ -206,6 +220,39 @@ export default function SettingsPage() {
       defaultView !== settings.default_view
     : false;
 
+  const openBillingPortal = async () => {
+    if (!user) return;
+
+    try {
+      setLoadingPortal(true);
+      const token = (await supabase.auth.getSession()).data.session?.access_token;
+
+      const response = await fetch("/api/stripe/create-portal-session", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.data?.url) {
+        window.location.href = result.data.url;
+      } else {
+        toast.error(result.error || "Failed to open billing portal");
+        setLoadingPortal(false);
+      }
+    } catch (error) {
+      console.error("Error opening billing portal:", error);
+      toast.error("Failed to open billing portal");
+      setLoadingPortal(false);
+    }
+  };
+
+  const handleUpgrade = () => {
+    router.push("/subscribe");
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -253,6 +300,129 @@ export default function SettingsPage() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Subscription */}
+        <Card>
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                settings?.subscription_tier === "pro"
+                  ? "bg-gradient-to-br from-yellow-500 to-orange-600"
+                  : "bg-gray-500/20"
+              }`}>
+                <Crown size={24} className={
+                  settings?.subscription_tier === "pro" ? "text-white" : "text-gray-400"
+                } />
+              </div>
+              <div>
+                <h2 className="text-2xl font-semibold">Subscription</h2>
+                <p className="text-sm text-white/60">
+                  {settings?.subscription_tier === "pro"
+                    ? "You're on the Pro plan"
+                    : "You're on the Free plan"}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {/* Current Plan Info */}
+              <div className="bg-white/5 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-white/70">Current Plan</span>
+                  <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                    settings?.subscription_tier === "pro"
+                      ? "bg-gradient-to-r from-yellow-500/20 to-orange-600/20 text-yellow-400"
+                      : "bg-white/10 text-white/80"
+                  }`}>
+                    {settings?.subscription_tier === "pro" ? "Pro" : "Free"}
+                  </span>
+                </div>
+
+                {/* Ideas Count */}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-white/70">Ideas</span>
+                  <span className="text-sm text-white">
+                    {settings?.ideas_count || 0}
+                    {settings?.subscription_tier === "free" && " / 10"}
+                    {settings?.subscription_tier === "pro" && " / unlimited"}
+                  </span>
+                </div>
+
+                {/* Pro-only features */}
+                <div className="pt-3 border-t border-white/10">
+                  <div className="text-xs text-white/50 mb-2">Plan Features:</div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className={`w-1.5 h-1.5 rounded-full ${
+                        settings?.subscription_tier === "pro" ? "bg-primary" : "bg-white/30"
+                      }`} />
+                      <span className={settings?.subscription_tier === "pro" ? "text-white/90" : "text-white/50"}>
+                        {settings?.subscription_tier === "pro" ? "Unlimited" : "10"} ideas max
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className={`w-1.5 h-1.5 rounded-full ${
+                        settings?.subscription_tier === "pro" ? "bg-primary" : "bg-white/30"
+                      }`} />
+                      <span className={settings?.subscription_tier === "pro" ? "text-white/90" : "text-white/50"}>
+                        {settings?.subscription_tier === "pro" ? "5" : "2"}-minute voice recordings
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className={`w-1.5 h-1.5 rounded-full ${
+                        settings?.subscription_tier === "pro" ? "bg-primary" : "bg-white/30"
+                      }`} />
+                      <span className={settings?.subscription_tier === "pro" ? "text-white/90" : "text-white/50"}>
+                        {settings?.subscription_tier === "pro" ? "5" : "3"} refinement questions
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className={`w-1.5 h-1.5 rounded-full ${
+                        settings?.subscription_tier === "pro" ? "bg-primary" : "bg-red-500/50"
+                      }`} />
+                      <span className={settings?.subscription_tier === "pro" ? "text-white/90" : "text-white/50"}>
+                        AI validation {settings?.subscription_tier === "pro" ? "included" : "not available"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Subscription end date for Pro */}
+                {settings?.subscription_tier === "pro" && settings?.subscription_end_date && (
+                  <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                    <span className="text-sm text-white/70">Renews on</span>
+                    <span className="text-sm text-white">
+                      {new Date(settings.subscription_end_date).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Action buttons */}
+              {settings?.subscription_tier === "free" ? (
+                <Button
+                  variant="primary"
+                  className="w-full"
+                  onClick={handleUpgrade}
+                >
+                  <Sparkles size={20} className="mr-2" />
+                  Upgrade to Pro
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={openBillingPortal}
+                  loading={loadingPortal}
+                  disabled={loadingPortal}
+                >
+                  <CreditCard size={20} className="mr-2" />
+                  Manage Billing
+                </Button>
+              )}
             </div>
           </div>
         </Card>

@@ -5,6 +5,7 @@ import {
   formatApiResponse,
   addCorsHeaders,
 } from '@/lib/api-helpers';
+import { resetIdeasCount } from '@/lib/subscription-helpers';
 
 // DELETE /api/settings/delete-ideas - Delete all user ideas
 export async function DELETE(request: NextRequest) {
@@ -34,6 +35,9 @@ export async function DELETE(request: NextRequest) {
         { status: 500, headers: addCorsHeaders(new Headers()) }
       );
     }
+
+    // Reset ideas count for the user
+    await resetIdeasCount(supabase, user.id);
 
     return NextResponse.json(
       formatApiResponse({ message: 'All ideas deleted successfully' }, null),

@@ -39,10 +39,23 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "cap:sync": "npx cap sync",
+    "cap:open:ios": "npx cap open ios",
+    "cap:open:android": "npx cap open android",
+    "cap:run:ios": "npx cap run ios",
+    "cap:run:android": "npx cap run android",
+    "build:mobile": "npm run build && npx cap sync"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.68.0",
+    "@capacitor/android": "^7.4.4",
+    "@capacitor/cli": "^7.4.4",
+    "@capacitor/core": "^7.4.4",
+    "@capacitor/ios": "^7.4.4",
+    "@capacitor/splash-screen": "^7.0.3",
+    "@capacitor/status-bar": "^7.0.3",
+    "@stripe/stripe-js": "^8.4.0",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.80.0",
     "class-variance-authority": "^0.7.1",
@@ -54,6 +67,7 @@
     "react": "19.2.0",
     "react-dom": "19.2.0",
     "reactflow": "^11.11.4",
+    "stripe": "^19.3.0",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {

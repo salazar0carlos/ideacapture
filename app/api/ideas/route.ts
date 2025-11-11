@@ -8,6 +8,7 @@ import {
   parseFilterParams,
   addCorsHeaders,
 } from '@/lib/api-helpers';
+import { checkSubscriptionLimits, incrementIdeasCount } from '@/lib/subscription-helpers';
 
 // GET /api/ideas - Fetch all ideas for authenticated user
 export async function GET(request: NextRequest) {
@@ -111,6 +112,16 @@ export async function POST(request: NextRequest) {
     // Create Supabase client with user context
     const supabase = createServerSupabaseClient(request);
 
+    // Check subscription limits before creating idea
+    const limits = await checkSubscriptionLimits(supabase, user.id);
+    if (!limits.can_create_idea) {
+      const maxIdeas = limits.max_ideas === -1 ? 'unlimited' : limits.max_ideas;
+      return NextResponse.json(
+        formatApiResponse(null, `Idea limit reached. You have ${limits.current_ideas_count}/${maxIdeas} ideas. Upgrade to Pro for unlimited ideas.`),
+        { status: 403, headers: addCorsHeaders(new Headers()) }
+      );
+    }
+
     // Insert new idea
     const { data, error } = await supabase
       .from('ideas')
@@ -131,6 +142,9 @@ export async function POST(request: NextRequest) {
         { status: 500, headers: addCorsHeaders(new Headers()) }
       );
     }
+
+    // Increment ideas count for the user
+    await incrementIdeasCount(supabase, user.id);
 
     // Return created idea
     return NextResponse.json(

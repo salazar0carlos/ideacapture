@@ -9,6 +9,7 @@ import {
 } from '@/lib/api-helpers';
 import { RefinementQuestion } from '@/lib/types';
 import { Database } from '@/lib/database.types';
+import { getMaxRefinementQuestions } from '@/lib/subscription-helpers';
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
@@ -80,20 +81,18 @@ export async function POST(
       );
     }
 
+    // Get max refinement questions based on subscription tier
+    const maxQuestions = await getMaxRefinementQuestions(supabase, user.id);
+
     // Prepare prompt for Claude
-    const prompt = `You are helping refine a user's idea. Analyze the following idea and generate exactly 5 thoughtful questions that will help the user think deeper about their idea and develop it further.
+    const prompt = `You are helping refine a user's idea. Analyze the following idea and generate exactly ${maxQuestions} thoughtful questions that will help the user think deeper about their idea and develop it further.
 
 Idea Details:
 - Title: ${idea.title}
 - Type: ${idea.idea_type}
 - Description: ${idea.description || 'No description provided yet'}
 
-Generate 5 questions that cover different aspects:
-1. Problem/Need (category: "problem") - What problem does this solve? Who experiences this problem?
-2. Solution (category: "solution") - How will this work? What makes it unique?
-3. Market (category: "market") - Who is the target audience? What's the market opportunity?
-4. Feasibility (category: "feasibility") - What resources are needed? What are the challenges?
-5. Other (category: "other") - Any other important considerations?
+Generate ${maxQuestions} questions that cover different aspects${maxQuestions >= 5 ? `:\n1. Problem/Need (category: "problem") - What problem does this solve? Who experiences this problem?\n2. Solution (category: "solution") - How will this work? What makes it unique?\n3. Market (category: "market") - Who is the target audience? What's the market opportunity?\n4. Feasibility (category: "feasibility") - What resources are needed? What are the challenges?\n5. Other (category: "other") - Any other important considerations?` : ` focusing on the most critical aspects like problem, solution, and feasibility.`}
 
 Return ONLY a valid JSON array with no additional text, in this exact format:
 [
@@ -139,8 +138,8 @@ Return ONLY a valid JSON array with no additional text, in this exact format:
       }
 
       // Validate questions structure
-      if (!Array.isArray(questions) || questions.length !== 5) {
-        throw new Error('Invalid questions format from Claude');
+      if (!Array.isArray(questions) || questions.length !== maxQuestions) {
+        throw new Error(`Invalid questions format from Claude (expected ${maxQuestions} questions)`);
       }
 
       // Update idea with generated questions and set status to refining
