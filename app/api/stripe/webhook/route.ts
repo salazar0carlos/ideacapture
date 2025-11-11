@@ -3,10 +3,15 @@ import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/lib/database.types';
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-10-29.clover',
-});
+// Lazy initialize Stripe to avoid build-time errors
+function getStripeClient() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-10-29.clover',
+  });
+}
 
 // Initialize Supabase client with service role for webhook handling
 // Webhooks need service role because they don't have user auth context
@@ -53,6 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify webhook signature
+    const stripe = getStripeClient();
     let event: Stripe.Event;
     try {
       event = stripe.webhooks.constructEvent(
@@ -139,6 +145,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     }
 
     // Get subscription details from Stripe
+    const stripe = getStripeClient();
     const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any;
 
     // Calculate subscription end date
@@ -254,6 +261,7 @@ async function handlePaymentFailed(invoice: any) {
     }
 
     // Get subscription to get user ID
+    const stripe = getStripeClient();
     const subscription = await stripe.subscriptions.retrieve(
       invoice.subscription as string
     ) as any;
@@ -294,6 +302,7 @@ async function handlePaymentSucceeded(invoice: any) {
     }
 
     // Get subscription to get user ID
+    const stripe = getStripeClient();
     const subscription = await stripe.subscriptions.retrieve(
       invoice.subscription as string
     ) as any;

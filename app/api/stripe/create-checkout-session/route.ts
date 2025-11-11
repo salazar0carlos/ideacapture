@@ -8,10 +8,15 @@ import {
 } from '@/lib/api-helpers';
 import { Database } from '@/lib/database.types';
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-10-29.clover',
-});
+// Lazy initialize Stripe to avoid build-time errors
+function getStripeClient() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-10-29.clover',
+  });
+}
 
 /**
  * POST /api/stripe/create-checkout-session
@@ -79,6 +84,7 @@ export async function POST(request: NextRequest) {
 
     // Create Stripe customer if doesn't exist
     if (!customerId) {
+      const stripe = getStripeClient();
       const customer = await stripe.customers.create({
         email: user.email!,
         metadata: {
@@ -100,6 +106,7 @@ export async function POST(request: NextRequest) {
     const origin = request.headers.get('origin') || 'http://localhost:3000';
 
     // Create checkout session
+    const stripe = getStripeClient();
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],

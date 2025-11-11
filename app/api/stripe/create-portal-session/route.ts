@@ -8,10 +8,15 @@ import {
 } from '@/lib/api-helpers';
 import { Database } from '@/lib/database.types';
 
-// Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-10-29.clover',
-});
+// Lazy initialize Stripe to avoid build-time errors
+function getStripeClient() {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    throw new Error('STRIPE_SECRET_KEY is not configured');
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-10-29.clover',
+  });
+}
 
 /**
  * POST /api/stripe/create-portal-session
@@ -56,6 +61,7 @@ export async function POST(request: NextRequest) {
     const origin = request.headers.get('origin') || 'http://localhost:3000';
 
     // Create portal session
+    const stripe = getStripeClient();
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${origin}/settings`,
