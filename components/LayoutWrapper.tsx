@@ -2,17 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createBrowserClient } from "@supabase/ssr";
 import { BottomNav } from "@/components/BottomNav";
 import type { Database } from "@/lib/database.types";
 
 // Routes where BottomNav should be hidden
-const noNavRoutes = ["/login", "/signup"];
+const noNavRoutes = ["/login", "/signup", "/forgot-password", "/reset-password"];
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isAuthChecking, setIsAuthChecking] = useState(true);
-  const [supabase] = useState(() => createClientComponentClient<Database>());
+  const [supabase] = useState(() =>
+    createBrowserClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+  );
 
   useEffect(() => {
     // Check auth state on mount (important for PWA)

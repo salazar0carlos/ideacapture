@@ -22,6 +22,7 @@ import {
   Play,
   Pause,
   Volume2,
+  Folder,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Idea, IdeaType, IdeaStatus } from "@/lib/types";
@@ -56,6 +57,7 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isConverting, setIsConverting] = useState(false);
 
   // Edit form state
   const [editTitle, setEditTitle] = useState("");
@@ -222,6 +224,45 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
   const handleRefine = () => {
     if (!ideaId) return;
     router.push(`/ideas/${ideaId}/refine`);
+  };
+
+  const handleConvertToProject = async () => {
+    if (!ideaId || !idea) return;
+
+    setIsConverting(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/projects`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          idea_id: ideaId,
+          name: idea.title,
+          description: idea.description,
+          status: "planning",
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to convert to project");
+      }
+
+      toast.success("Idea converted to project!");
+
+      // Navigate to the new project
+      router.push(`/projects/${data.data.id}`);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to convert to project";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setIsConverting(false);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -531,32 +572,50 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
 
             {/* Action Buttons (when not editing) */}
             {!isEditing && (
-              <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-white/10">
-                <Button
-                  variant="primary"
-                  onClick={handleRefine}
-                  className="flex-1"
-                >
-                  <Sparkles size={20} className="mr-2" />
-                  Refine Idea
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={handleValidate}
-                  loading={isValidating}
-                  disabled={isValidating}
-                  className="flex-1"
-                >
-                  <CheckCircle size={20} className="mr-2" />
-                  Validate Idea
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="border-danger text-danger hover:bg-danger/10"
-                >
-                  <Trash2 size={20} />
-                </Button>
+              <div className="space-y-3 pt-4 border-t border-white/10">
+                {/* Convert to Project button (only for validated ideas) */}
+                {idea.status === "validated" && (
+                  <Button
+                    variant="primary"
+                    onClick={handleConvertToProject}
+                    loading={isConverting}
+                    disabled={isConverting}
+                    className="w-full"
+                    size="lg"
+                  >
+                    <Folder size={20} className="mr-2" />
+                    Convert to Project
+                  </Button>
+                )}
+
+                {/* Regular action buttons */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    variant={idea.status === "validated" ? "secondary" : "primary"}
+                    onClick={handleRefine}
+                    className="flex-1"
+                  >
+                    <Sparkles size={20} className="mr-2" />
+                    Refine Idea
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={handleValidate}
+                    loading={isValidating}
+                    disabled={isValidating}
+                    className="flex-1"
+                  >
+                    <CheckCircle size={20} className="mr-2" />
+                    Validate Idea
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="border-danger text-danger hover:bg-danger/10"
+                  >
+                    <Trash2 size={20} />
+                  </Button>
+                </div>
               </div>
             )}
           </div>

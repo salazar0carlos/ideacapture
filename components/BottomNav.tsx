@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Network, Lightbulb, Settings } from "lucide-react";
+import { Home, Folder, Lightbulb, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -12,9 +12,9 @@ const navItems = [
     icon: Home,
   },
   {
-    name: "Mind Map",
-    href: "/mindmap",
-    icon: Network,
+    name: "Projects",
+    href: "/projects",
+    icon: Folder,
   },
   {
     name: "Ideas",
