@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { AuthProvider } from "@/lib/auth-context";
 import { ToastProvider } from "@/lib/toast-context";
 import { ToastContainer } from "@/components/Toast";
+import { LayoutWrapper } from "@/components/LayoutWrapper";
 
 export const metadata: Metadata = {
   title: "IdeaCapture",
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "IdeaCapture",
+    startupImage: "/icons/icon-192x192.png",
   },
   icons: {
     icon: "/icons/icon-192x192.png",
@@ -45,6 +47,7 @@ export default function RootLayout({
             <ToastContainer />
           </ToastProvider>
         </AuthProvider>
+        <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
   );
