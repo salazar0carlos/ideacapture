@@ -1,5 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { BottomNav } from "@/components/BottomNav";
+import { AuthProvider } from "@/lib/auth-context";
+import { ToastProvider } from "@/lib/toast-context";
+import { ToastContainer } from "@/components/Toast";
 import { LayoutWrapper } from "@/components/LayoutWrapper";
 
 export const metadata: Metadata = {
@@ -34,6 +38,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
+        <AuthProvider>
+          <ToastProvider>
+            <main className="min-h-screen pb-[80px]">
+              {children}
+            </main>
+            <BottomNav />
+            <ToastContainer />
+          </ToastProvider>
+        </AuthProvider>
         <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>

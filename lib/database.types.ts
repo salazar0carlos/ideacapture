@@ -12,6 +12,7 @@ export interface Database {
       ideas: {
         Row: {
           id: string
+          user_id: string
           title: string
           description: string | null
           idea_type: string
@@ -31,6 +32,7 @@ export interface Database {
         }
         Insert: {
           id?: string
+          user_id: string
           title: string
           description?: string | null
           idea_type: string
@@ -50,6 +52,7 @@ export interface Database {
         }
         Update: {
           id?: string
+          user_id?: string
           title?: string
           description?: string | null
           idea_type?: string
@@ -71,21 +74,45 @@ export interface Database {
       user_settings: {
         Row: {
           id: string
+          user_id: string
           validation_enabled: boolean
           default_view: string
+          subscription_tier: string
+          subscription_status: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_end_date: string | null
+          ideas_count: number
           created_at: string
+          updated_at: string
         }
         Insert: {
           id?: string
+          user_id: string
           validation_enabled?: boolean
           default_view?: string
+          subscription_tier?: string
+          subscription_status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_end_date?: string | null
+          ideas_count?: number
           created_at?: string
+          updated_at?: string
         }
         Update: {
           id?: string
+          user_id?: string
           validation_enabled?: boolean
           default_view?: string
+          subscription_tier?: string
+          subscription_status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_end_date?: string | null
+          ideas_count?: number
           created_at?: string
+          updated_at?: string
         }
       }
     }
