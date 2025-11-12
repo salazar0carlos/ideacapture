@@ -63,13 +63,13 @@ export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/login", "/signup"];
+  const publicRoutes = ["/login", "/signup", "/forgot-password", "/reset-password", "/terms", "/privacy"];
   const isPublicRoute = publicRoutes.some((route) =>
     pathname.startsWith(route)
   );
 
-  // Protected routes that require authentication
-  const protectedRoutes = ["/", "/ideas", "/mindmap", "/settings"];
+  // Protected routes that require authentication (including Phase 2 routes)
+  const protectedRoutes = ["/", "/ideas", "/projects", "/tasks", "/mindmap", "/settings", "/subscribe"];
   const isProtectedRoute = protectedRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + "/")
   );
@@ -81,7 +81,7 @@ export async function proxy(req: NextRequest) {
   }
 
   // If user is authenticated and trying to access login/signup, redirect to home
-  if (session && isPublicRoute) {
+  if (session && (pathname === "/login" || pathname === "/signup")) {
     const redirectUrl = new URL("/", req.url);
     return NextResponse.redirect(redirectUrl);
   }
@@ -93,11 +93,12 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
+     * - api (API routes handle their own auth)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public files (images, manifests, etc.)
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|json)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|json)$).*)",
   ],
 };
