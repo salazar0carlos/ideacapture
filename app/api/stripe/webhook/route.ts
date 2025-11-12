@@ -13,18 +13,24 @@ function getStripeClient() {
   });
 }
 
-// Initialize Supabase client with service role for webhook handling
+// Lazy initialize Supabase client to avoid build-time errors
 // Webhooks need service role because they don't have user auth context
-const supabase = createClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
+function getSupabaseClient() {
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Supabase environment variables are not configured');
   }
-);
+
+  return createClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    }
+  );
+}
 
 /**
  * POST /api/stripe/webhook
@@ -152,6 +158,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const endDate = new Date((subscription as any).current_period_end * 1000).toISOString();
 
     // Update user_settings with subscription info
+    const supabase = getSupabaseClient();
     const { error } = await (supabase as any)
       .from('user_settings')
       .upsert({
@@ -198,6 +205,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     const tier = ['active', 'trialing'].includes(status) ? 'pro' : 'free';
 
     // Update user_settings
+    const supabase = getSupabaseClient();
     const { error } = await (supabase as any)
       .from('user_settings')
       .update({
@@ -231,6 +239,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     }
 
     // Downgrade to free plan
+    const supabase = getSupabaseClient();
     const { error } = await (supabase as any)
       .from('user_settings')
       .update({
@@ -274,6 +283,7 @@ async function handlePaymentFailed(invoice: any) {
     }
 
     // Update status to past_due
+    const supabase = getSupabaseClient();
     const { error } = await (supabase as any)
       .from('user_settings')
       .update({
@@ -315,6 +325,7 @@ async function handlePaymentSucceeded(invoice: any) {
     }
 
     // Update status to active if it was past_due
+    const supabase = getSupabaseClient();
     const { error } = await (supabase as any)
       .from('user_settings')
       .update({
